@@ -1,0 +1,11 @@
+name: dataset
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - opencv
+  - pillow
+  - python=3.11
+  - pip
+  - pip:
+      - tk
