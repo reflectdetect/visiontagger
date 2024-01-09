@@ -47,15 +47,3 @@ Contributions to VisionTagger are welcome! Please read our [Contributing Guideli
 ## License
 
 This project is licensed under the [MIT License](LICENCE) - see the LICENSE file for details.
-
----
-
-### Notes:
-
-- Replace `LINK_TO_CONTRIBUTING_GUIDELINES` and `LINK_TO_LICENSE` with actual links to your contributing guidelines and license file, respectively.
-- You might want to add a section for **Requirements** if there are any specific requirements needed to run your tool.
-- Consider adding a **Screenshots** section to visually demonstrate how your tool works.
-- The **Acknowledgments** section is optional but a good place to give credit where it's due.
-- Ensure to include a `LICENSE` file in your project repository.
-
-A well-documented README is crucial for open-source projects as it is often the first thing users and potential contributors see. It should be clear, concise, and provide all necessary information to engage and assist your users.
