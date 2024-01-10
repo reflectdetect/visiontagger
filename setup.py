@@ -1,8 +1,11 @@
 from setuptools import setup, find_packages
 
+visiontagger_version = subprocess.run(["git", "describe", "--tags"], stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
+assert "." in visiontagger_version
+
 setup(
     name="VisionTagger",
-    version="0.1.6",
+    version=visiontagger_version,
     packages=find_packages(),
     include_package_data=True,
     package_data={
