@@ -15,10 +15,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - name: Set up Git user
+    - name: Check current directory and list contents
       run: |
-        git config --global user.name 'CI Bot'
-        git config --global user.email 'ci-bot@example.com'
+        echo "Current working directory: $PWD"
+        ls -la
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
