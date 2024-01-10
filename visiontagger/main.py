@@ -1,5 +1,9 @@
-import tkinter as tk
-from tkinter import filedialog, messagebox
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox
+except ImportError:
+    raise ImportError("Tkinter is not installed. Please install it using your package manager, e.g., 'apt install python3-tk'.")
+
 import visiontagger
 from PIL import Image, ImageTk
 import csv
