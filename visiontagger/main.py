@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import visiontagger
 from PIL import Image, ImageTk
 import csv
 import os
+import shutil
 
 
 class AnnotationTool:
@@ -10,6 +12,10 @@ class AnnotationTool:
         self.root = root
         self.root.title("Thermal Image Annotation Tool")
         self.root.geometry("800x600")  # Set initial size of the window
+        icon_path = os.path.join(os.path.dirname(visiontagger.__file__), 'icon.png')
+
+        icon = ImageTk.PhotoImage(file=icon_path)
+        self.root.iconphoto(False, icon)
 
         # Initialize variables
         self.image_list = []
@@ -134,22 +140,22 @@ class AnnotationTool:
             messagebox.showerror("Error", f"Failed to load the image\n{e}")
 
     def save_annotations(self):
-        # Check if there are images loaded
         if not self.image_list:
             messagebox.showinfo("No Images", "No images loaded. Load a folder to save annotations.")
             return
-        # Ask the user for a directory to save the annotations
+
         save_path = filedialog.askdirectory()
         if not save_path:
             return
 
-        # Create a folder for the dataset
         dataset_folder = os.path.join(save_path, "MOT_Dataset")
-        os.makedirs(dataset_folder, exist_ok=True)
+        images_folder = os.path.join(dataset_folder, "Images", "seq1")
+        annotations_folder = os.path.join(dataset_folder, "annotations")
+        os.makedirs(images_folder, exist_ok=True)
+        os.makedirs(annotations_folder, exist_ok=True)
 
-        # File path for the annotations
-        annotation_file = os.path.join(dataset_folder, "annotations.txt")
-        # TODO: Add correct dataset format
+        annotation_file = os.path.join(annotations_folder, "seq1.csv")
+
         try:
             with open(annotation_file, 'w', newline='') as file:
                 writer = csv.writer(file)
@@ -162,17 +168,20 @@ class AnnotationTool:
                     scale_y = sizes['original'][1] / sizes['display'][1]
 
                     for bbox_id, bbox in enumerate(bboxes):
-                        # Scale coordinates
                         x_min, y_min, x_max, y_max = bbox
                         x_min, x_max = x_min * scale_x, x_max * scale_x
                         y_min, y_max = y_min * scale_y, y_max * scale_y
                         width, height = x_max - x_min, y_max - y_min
 
-                        # Write scaled coordinates
-                        frame_number = image_index + 1
-                        writer.writerow([frame_number, bbox_id + 1, x_min, y_min, width, height, -1, -1, -1, -1])
+                        # Frame number, object ID, bbox coords, default values for other fields
+                        writer.writerow([image_index, 0, x_min, y_min, width, height, -1, -1, -1, -1])
 
-            messagebox.showinfo("Success", "Annotations saved successfully.")
+            # Copying images to the dataset folder
+            for image_index, image_path in enumerate(self.image_list):
+                target_path = os.path.join(images_folder, f"seq1_{image_index:012d}.jpg")
+                shutil.copy(image_path, target_path)
+
+            messagebox.showinfo("Success", "Annotations and images saved successfully.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save annotations\n{e}")
 
@@ -266,7 +275,11 @@ class AnnotationTool:
             self.root.destroy()
 
 
-# Initialize Tkinter and Application
-root = tk.Tk()
-app = AnnotationTool(root)
-root.mainloop()
+def main():
+    root = tk.Tk()
+    app = AnnotationTool(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
