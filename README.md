@@ -34,6 +34,8 @@ After installation, you can start VisionTagger with:
 
 ```bash
 visiontagger
+or
+python -m visiontagger
 ```
 
 ### Loading Images
