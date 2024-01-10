@@ -17,6 +17,16 @@ To install VisionTagger, simply run:
 ```bash
 pip install visiontagger
 ```
+### Installing Tkinter
+
+If you encounter a "No module named 'tkinter'" error, you may need to install Tkinter separately, especially on Linux systems. Here's how to install it:
+
+- For Debian/Ubuntu: `sudo apt-get install python3-tk`
+- For Fedora: `sudo dnf install python3-tkinter`
+- For Arch Linux: `sudo pacman -S tk`
+
+For other Linux distributions, please use the system's package manager to install the `python3-tk` package.
+
 
 ## Usage
 
@@ -24,6 +34,8 @@ After installation, you can start VisionTagger with:
 
 ```bash
 visiontagger
+or
+python -m visiontagger
 ```
 
 ### Loading Images
