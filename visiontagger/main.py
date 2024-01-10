@@ -59,6 +59,10 @@ class AnnotationTool:
         next_button = tk.Button(self.root, text="Next >>", command=self.next_image)
         next_button.pack(side=tk.RIGHT, padx=10, pady=10)
 
+        # Label for tips
+        self.tips_label = tk.Label(self.root, text="Left Click: Draw Box | Right Click: Remove Box", fg="blue")
+        self.tips_label.pack(side=tk.BOTTOM, fill=tk.X)
+
         # Bounding box variables
         self.start_x = None
         self.start_y = None
