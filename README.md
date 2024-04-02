@@ -3,7 +3,7 @@
 <a><img src="image/Logo-circle.png" alt="FawnRescue" width="128" height="128" title="FawnRescue"></a>
   <h3 align="center">FawnRescue</h3>
   <p align="center">
-    Flight Computer Code<br />
+    VisionTagger<br />
     <p align="center">
   <a href="https://github.com/FawnRescue/dataset/blob/main/LICENSE"><img src="https://img.shields.io/github/license/FawnRescue/dataset" alt="License"></a>
   <a href="https://github.com/FawnRescue/dataset/network/members"><img src="https://img.shields.io/github/forks/FawnRescue/dataset?style=social" alt="GitHub forks"></a>
