@@ -1,20 +1,28 @@
-import numpy as np
+from visiontagger.obb_utils import sort_points, calculate_obb, draw_oriented_bounding_box
 
 try:
     import tkinter as tk
     from tkinter import filedialog, messagebox
 except ImportError:
-    raise ImportError("Tkinter is not installed. Please install it using your package manager, e.g., 'apt install python3-tk'.")
+    raise ImportError(
+        "Tkinter is not installed. Please install it using your package manager, e.g., 'apt install python3-tk'.")
 
+import numpy as np
 import visiontagger
 from PIL import Image, ImageTk
 import csv
 import os
 import shutil
 
+MARKER_SIZE = 3.  # You can adjust the size
+
 
 class AnnotationTool:
     def __init__(self, root):
+        self.last_drawn_bounding_box = None
+        self.current_click_markers = []
+        self.current_bbox = None
+        self.click_count = 0
         self.root = root
         self.root.title("Thermal Image Annotation Tool")
         self.root.geometry("800x600")  # Set initial size of the window
@@ -251,34 +259,59 @@ class AnnotationTool:
     def on_mouse_down(self, event):
         # Check if an image is loaded and if the click is within the image area
         if self.image_on_canvas and self.point_within_image(event.x, event.y):
-            self.start_x = self.canvas.canvasx(event.x)
-            self.start_y = self.canvas.canvasy(event.y)
-            if not self.rect:
-                self.rect = self.canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y,
-                                                         outline='red')
+            self.click_count += 1
+
+            # Draw a marker on the click location
+            self.current_click_markers.append(
+                self.marker(event)
+            )
+        if self.click_count == 3:
+            self.canvas.delete(self.last_drawn_bounding_box)
+            self.process_oriented_bounding_box()
+
+    def marker(self, event):
+        x, y = event.x, event.y
+        return [x, y,
+                self.canvas.create_oval(x - MARKER_SIZE,
+                                        y - MARKER_SIZE,
+                                        x + MARKER_SIZE,
+                                        y + MARKER_SIZE,
+                                        fill="blue",
+                                        outline="")]
 
     def on_mouse_drag(self, event):
-        # Check if the rectangle has started within the image
-        if self.rect and self.image_on_canvas:
-            # Constrain the drag within the image bounds
-            curX, curY = self.constrain_within_image(event.x, event.y)
-
-            # Update the size of the rectangle as the mouse is dragged
-            self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
+        self.canvas.delete(self.current_click_markers[len(self.current_click_markers) - 1][2])
+        self.current_click_markers[len(self.current_click_markers) - 1] = self.marker(event)
+        if self.click_count == 3:
+            self.canvas.delete(self.last_drawn_bounding_box)
+            self.process_oriented_bounding_box()
 
     def on_mouse_up(self, event):
-        if self.rect and self.image_on_canvas:
-            # Finalize the bounding box
-            end_x, end_y = self.constrain_within_image(event.x, event.y)
+        if self.click_count == 3:
+            coordinates = self.process_oriented_bounding_box()
+            self.bounding_boxes.setdefault(self.current_image_index, []).append(
+                coordinates
+            )
+            self.current_bbox = None
+            self.last_drawn_bounding_box = None
+            self.click_count = 0
 
-            # Reorder coordinates to ensure top-left and bottom-right ordering
-            start_x, start_y = min(self.start_x, end_x), min(self.start_y, end_y)
-            end_x, end_y = max(self.start_x, end_x), max(self.start_y, end_y)
+            # Clear the click markers
+            for x, y, marker_id in self.current_click_markers:
+                self.canvas.delete(marker_id)
+            self.current_click_markers = []
 
-            self.canvas.coords(self.rect, start_x, start_y, end_x, end_y)
-            bbox = (start_x, start_y, end_x, end_y)
-            self.bounding_boxes.setdefault(self.current_image_index, []).append(bbox)
-            self.rect = None  # Reset the rectangle
+    def process_oriented_bounding_box(self):
+        # 1. Calculate center, width, height, and angle from the three points
+        coordinates = calculate_obb(self.current_click_markers[0],
+                                    self.current_click_markers[1],
+                                    self.current_click_markers[2])
+        # 2. Draw the bounding box on the canvas
+        self.last_drawn_bounding_box = draw_oriented_bounding_box(self.canvas,
+                                                                  coordinates,
+                                                                  color='red')
+
+        return coordinates
 
     def on_right_click(self, event):
         x, y = self.canvas.canvasx(event.x), self.canvas.canvasy(event.y)
