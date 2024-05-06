@@ -102,7 +102,7 @@ class AnnotationTool:
 
         # Filter and store image paths
         self.image_list = [os.path.join(folder_path, file) for file in files if
-                           file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff'))]
+                           file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tiff', '.tif'))]
 
         if not self.image_list:
             messagebox.showinfo("No images", "No images found in the selected folder")
