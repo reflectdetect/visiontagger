@@ -1,3 +1,5 @@
+import numpy as np
+
 try:
     import tkinter as tk
     from tkinter import filedialog, messagebox
@@ -43,6 +45,7 @@ class AnnotationTool:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
         menu_bar.add_cascade(label="File", menu=file_menu)
+        menu_bar.add_command(label="Clear current image", command=self.clear_boxes)
 
         # Create a canvas for image display
         self.canvas = tk.Canvas(self.root, bg='gray')
@@ -80,10 +83,25 @@ class AnnotationTool:
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def load_images(self):
-        folder_path = filedialog.askdirectory()
+        config_file = "folder_config.txt"
+        initial_dir = None  # Default value
+
+        try:
+            # Try to read the last used folder path
+            with open(config_file, "r") as file:
+                initial_dir = file.readline().strip()
+        except FileNotFoundError:
+            pass  # No problem if the file doesn't exist yet
+
+        # Use filedialog, prefilled with the last saved path if available
+        folder_path = filedialog.askdirectory(initialdir=initial_dir)
         if not folder_path:  # If no folder is selected
             return
-
+        try:
+            with open(config_file, "w") as file:
+                file.write(folder_path)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save folder path: {e}")
         # Clear existing data
         self.image_list = []
         self.current_image_index = 0
@@ -121,6 +139,14 @@ class AnnotationTool:
         try:
             # Load the image using PIL
             pil_image = Image.open(image_path)
+
+            if (pil_image.format == 'TIFF' or pil_image.format == 'TIF') and pil_image.mode == 'I;16':
+                array = np.array(pil_image)
+                normalized = (array.astype(np.uint16) - array.min()) * 255.0 / (array.max() - array.min())
+                pil_image = Image.fromarray(normalized.astype(np.uint8))
+
+            if pil_image.mode != "RGB":
+                pil_image = pil_image.convert("RGB")
             # Store the original and display sizes
             original_image_size = pil_image.size  # (width, height)
             pil_image.thumbnail((800, 600))
@@ -132,6 +158,7 @@ class AnnotationTool:
 
             # Clear the canvas including any existing bounding boxes
             self.canvas.delete("all")
+
             self.canvas.create_image(0, 0, anchor=tk.NW, image=self.canvas_image)
 
             # Redraw stored bounding boxes for the current image
@@ -146,6 +173,14 @@ class AnnotationTool:
             self.status_bar.config(text=f"Image {self.current_image_index + 1} of {len(self.image_list)}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load the image\n{e}")
+
+    def clear_boxes(self):
+        """Removes all bounding boxes from the current image."""
+
+        if self.current_image_index in self.bounding_boxes:
+            del self.bounding_boxes[self.current_image_index]  # Delete all boxes for the current image
+        self.canvas.delete("all")  # Clear the canvas
+        self.load_current_image()  # Reload the image to fully reflect the change
 
     def save_annotations(self):
         if not self.image_list:
