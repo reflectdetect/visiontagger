@@ -1,4 +1,4 @@
-from visiontagger.obb_utils import sort_points, calculate_obb, draw_oriented_bounding_box
+from visiontagger.obb_utils import sort_points, calculate_obb, draw_oriented_bounding_box, is_inside_rectangle
 
 try:
     import tkinter as tk
@@ -20,6 +20,7 @@ MARKER_SIZE = 3.  # You can adjust the size
 class AnnotationTool:
     def __init__(self, root):
         self.last_drawn_bounding_box = None
+        self.last_drawn_line = None
         self.current_click_markers = []
         self.current_bbox = None
         self.click_count = 0
@@ -172,7 +173,7 @@ class AnnotationTool:
             # Redraw stored bounding boxes for the current image
             if self.current_image_index in self.bounding_boxes:
                 for bbox in self.bounding_boxes[self.current_image_index]:
-                    self.canvas.create_rectangle(bbox[0], bbox[1], bbox[2], bbox[3], outline='red')
+                    draw_oriented_bounding_box(self.canvas, bbox)
 
             # Store the dimensions of the image on the canvas
             self.image_on_canvas = (0, 0, self.canvas_image.width(), self.canvas_image.height())
@@ -199,7 +200,7 @@ class AnnotationTool:
         if not save_path:
             return
 
-        dataset_folder = os.path.join(save_path, "MOT_Dataset")
+        dataset_folder = os.path.join(save_path, "YOLO_OBB_Dataset")
         images_folder = os.path.join(dataset_folder, "Images", "seq1")
         annotations_folder = os.path.join(dataset_folder, "annotations")
         os.makedirs(images_folder, exist_ok=True)
@@ -219,13 +220,12 @@ class AnnotationTool:
                     scale_y = sizes['original'][1] / sizes['display'][1]
 
                     for bbox_id, bbox in enumerate(bboxes):
-                        x_min, y_min, x_max, y_max = bbox
-                        x_min, x_max = x_min * scale_x, x_max * scale_x
-                        y_min, y_max = y_min * scale_y, y_max * scale_y
-                        width, height = x_max - x_min, y_max - y_min
+                        (x1, y1, _), (x2, y2, _), (x3, y3), (x4, y4) = bbox
+                        x1, x2, x3, x4 = np.array((x1, x2, x3, x4)) * scale_x
+                        y1, y2, y3, y4 = np.array((y1, y2, y3, y4)) * scale_y
 
-                        # Frame number, object ID, bbox coords, default values for other fields
-                        writer.writerow([image_index, 0, x_min, y_min, width, height, -1, -1, -1, -1])
+                        # image_index, class_index, x1, y1, x2, y2, x3, y3, x4, y4
+                        writer.writerow([image_index, 0, x1, y1, x2, y2, x3, y3, x4, y4])
 
             # Copying images to the dataset folder
             for image_index, image_path in enumerate(self.image_list):
@@ -282,6 +282,14 @@ class AnnotationTool:
     def on_mouse_drag(self, event):
         self.canvas.delete(self.current_click_markers[len(self.current_click_markers) - 1][2])
         self.current_click_markers[len(self.current_click_markers) - 1] = self.marker(event)
+        if self.click_count == 2:
+            self.canvas.delete(self.last_drawn_line)
+            self.last_drawn_line = self.canvas.create_line(
+                self.current_click_markers[len(self.current_click_markers) - 2][0],
+                self.current_click_markers[len(self.current_click_markers) - 2][1],
+                self.current_click_markers[len(self.current_click_markers) - 1][0],
+                self.current_click_markers[len(self.current_click_markers) - 1][1], fill="blue")
+
         if self.click_count == 3:
             self.canvas.delete(self.last_drawn_bounding_box)
             self.process_oriented_bounding_box()
@@ -320,7 +328,7 @@ class AnnotationTool:
         # Check if the right-click is inside any bounding box
         if self.current_image_index in self.bounding_boxes:
             for idx, bbox in enumerate(self.bounding_boxes[self.current_image_index]):
-                if bbox[0] <= x <= bbox[2] and bbox[1] <= y <= bbox[3]:
+                if is_inside_rectangle(bbox[0][:-1], bbox[1][:-1], bbox[2], bbox[3], list((x, y))):
                     to_remove.append(idx)
 
         # Remove the bounding boxes

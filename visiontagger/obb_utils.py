@@ -1,5 +1,42 @@
 import math
 
+import numpy as np
+
+
+def is_inside_rectangle(A, B, C, D, M):
+    """
+    This function checks if a point M lies inside a rectangle given by edge points ABCD.
+
+    Args:
+        A: numpy array representing the coordinates of point A (x, y)
+        B: numpy array representing the coordinates of point B (x, y)
+        C: numpy array representing the coordinates of point C (x, y)
+        D: numpy array representing the coordinates of point D (x, y)
+        M: numpy array representing the coordinates of point M (x, y)
+
+    Returns:
+        True if M is inside the rectangle, False otherwise.
+    """
+    # Convert points to NumPy arrays (if not already)
+    A = np.array(A)
+    B = np.array(B)
+    C = np.array(C)
+    D = np.array(D)
+    M = np.array(M)
+
+    # Calculate the vectors
+    AM = M - A
+    AB = B - A
+    AM_AB = np.dot(AM, AB)
+    AB_AB = np.dot(AB, AB)
+
+    AD = D - A
+    AM_AD = np.dot(AM, AD)
+    AD_AD = np.dot(AD, AD)
+
+    # Check if the dot products are within the rectangle bounds
+    return 0 < AM_AB < AB_AB and 0 < AM_AD < AD_AD
+
 
 def plus(point1, point2):
     return point1[0] + point2[0], point1[1] + point2[1]
@@ -71,7 +108,7 @@ def sort_points(points):
     return sorted_points
 
 
-def draw_oriented_bounding_box(canvas, coordinates, color):
+def draw_oriented_bounding_box(canvas, coordinates, color="red"):
     # Draw a polygon on the canvas using the rotated points
     points_list = []
     for point in coordinates:
